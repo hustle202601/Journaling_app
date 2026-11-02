@@ -14,11 +14,20 @@ dist-ssr
 .vinxi
 .tanstack/**
 .nitro
+
+# Local secrets (never commit)
 *.local
+.secrets/
 
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
+
+# Large binary assets (do not commit)
+LINUX.X64_193000_db_home.zip
+
+# Compiled MetaTrader EA binaries (the source .mq5 is what users download)
+public/*.ex5
 
 # Editor directories and files
 .vscode/*
