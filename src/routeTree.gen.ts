@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as ImportRouteImport } from './routes/import'
+import { Route as Mt5RouteImport } from './routes/mt5'
+import { Route as SigninRouteImport } from './routes/signin'
 import { Route as TradesIndexRouteImport } from './routes/trades.index'
 import { Route as TradesIdRouteImport } from './routes/trades.$id'
 
@@ -36,6 +38,16 @@ const ImportRoute = ImportRouteImport.update({
   path: '/import',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Mt5Route = Mt5RouteImport.update({
+  id: '/mt5',
+  path: '/mt5',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SigninRoute = SigninRouteImport.update({
+  id: '/signin',
+  path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TradesIndexRoute = TradesIndexRouteImport.update({
   id: '/trades/',
   path: '/trades/',
@@ -52,6 +64,8 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/calendar': typeof CalendarRoute
   '/import': typeof ImportRoute
+  '/mt5': typeof Mt5Route
+  '/signin': typeof SigninRoute
   '/trades/$id': typeof TradesIdRoute
   '/trades/': typeof TradesIndexRoute
 }
@@ -60,6 +74,8 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/calendar': typeof CalendarRoute
   '/import': typeof ImportRoute
+  '/mt5': typeof Mt5Route
+  '/signin': typeof SigninRoute
   '/trades/$id': typeof TradesIdRoute
   '/trades': typeof TradesIndexRoute
 }
@@ -69,21 +85,40 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/calendar': typeof CalendarRoute
   '/import': typeof ImportRoute
+  '/mt5': typeof Mt5Route
+  '/signin': typeof SigninRoute
   '/trades/$id': typeof TradesIdRoute
   '/trades/': typeof TradesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/analytics' | '/calendar' | '/import' | '/trades/$id' | '/trades/'
+    | '/'
+    | '/analytics'
+    | '/calendar'
+    | '/import'
+    | '/mt5'
+    | '/signin'
+    | '/trades/$id'
+    | '/trades/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/analytics' | '/calendar' | '/import' | '/trades/$id' | '/trades'
+  to:
+    | '/'
+    | '/analytics'
+    | '/calendar'
+    | '/import'
+    | '/mt5'
+    | '/signin'
+    | '/trades/$id'
+    | '/trades'
   id:
     | '__root__'
     | '/'
     | '/analytics'
     | '/calendar'
     | '/import'
+    | '/mt5'
+    | '/signin'
     | '/trades/$id'
     | '/trades/'
   fileRoutesById: FileRoutesById
@@ -93,6 +128,8 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   CalendarRoute: typeof CalendarRoute
   ImportRoute: typeof ImportRoute
+  Mt5Route: typeof Mt5Route
+  SigninRoute: typeof SigninRoute
   TradesIdRoute: typeof TradesIdRoute
   TradesIndexRoute: typeof TradesIndexRoute
 }
@@ -127,6 +164,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ImportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mt5': {
+      id: '/mt5'
+      path: '/mt5'
+      fullPath: '/mt5'
+      preLoaderRoute: typeof Mt5RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signin': {
+      id: '/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof SigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/trades/': {
       id: '/trades/'
       path: '/trades'
@@ -149,6 +200,8 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   CalendarRoute: CalendarRoute,
   ImportRoute: ImportRoute,
+  Mt5Route: Mt5Route,
+  SigninRoute: SigninRoute,
   TradesIdRoute: TradesIdRoute,
   TradesIndexRoute: TradesIndexRoute,
 }
