@@ -2,10 +2,26 @@
 @source "../src";
 @import "tw-animate-css";
 
+@font-face {
+  font-family: "General Sans";
+  src: url("/fonts/general-sans/GeneralSans-Variable.woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "General Sans";
+  src: url("/fonts/general-sans/GeneralSans-VariableItalic.woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: italic;
+  font-display: swap;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: "Manrope", system-ui, sans-serif;
+  --font-sans: "General Sans", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
