@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell, EmptyState, Pnl } from "@/components/AppShell";
+import { FilterPane, FilterSelect, type FilterOption } from "@/components/FilterPane";
 import { useTrades } from "@/lib/store";
 import {
   money,
@@ -27,11 +28,25 @@ export const Route = createFileRoute("/trades/")({
   component: Trades,
 });
 
-const chip = (on: boolean) =>
-  cn(
-    "rounded-full border px-3 py-1.5 text-xs font-semibold whitespace-nowrap",
-    on ? "border-primary bg-primary text-primary-foreground" : "bg-card text-muted-foreground",
-  );
+const sourceOptions: FilterOption[] = [
+  { value: "all", label: "All" },
+  { value: "mt5", label: "MT5" },
+  { value: "manual", label: "Manual" },
+];
+
+const sideOptions: FilterOption[] = [
+  { value: "all", label: "All" },
+  { value: "buy", label: "Buy" },
+  { value: "sell", label: "Sell" },
+];
+
+const resultOptions: FilterOption[] = [
+  { value: "all", label: "All" },
+  { value: "win", label: "Win" },
+  { value: "loss", label: "Loss" },
+];
+
+const periodOptions: FilterOption[] = tradeRanges.map(({ value, label }) => ({ value, label }));
 
 function SourceBadge({ source }: { source?: Trade["source"] }) {
   const mt5 = source === "mt5";
@@ -56,6 +71,10 @@ function Trades() {
   const [range, setRange] = useState<TradeRange>("all");
 
   const symbols = useMemo(() => ["All", ...new Set(trades.map((t) => t.symbol))], [trades]);
+  const symbolOptions = useMemo<FilterOption[]>(
+    () => symbols.map((symbol) => ({ value: symbol, label: symbol })),
+    [symbols],
+  );
   const list = useMemo(
     () =>
       tradesInRange(trades, range)
@@ -70,6 +89,16 @@ function Trades() {
     [trades, sym, side, res, src, range],
   );
   const total = list.reduce((a, t) => a + netPnl(t), 0);
+  const activeCount = [range !== "all", src !== "all", sym !== "All", side !== "all", res !== "all"].filter(
+    Boolean,
+  ).length;
+  const resetFilters = () => {
+    setRange("all");
+    setSrc("all");
+    setSym("All");
+    setSide("all");
+    setRes("all");
+  };
 
   if (loading && !trades.length) {
     return (
@@ -82,46 +111,48 @@ function Trades() {
 
   return (
     <AppShell title="Trades">
-      <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1">
-        <span className="shrink-0 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Period</span>
-        {tradeRanges.map(({ value, label }) => (
-          <button key={value} className={chip(range === value)} onClick={() => setRange(value)}>
-            {label}
-          </button>
-        ))}
-      </div>
-      <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1">
-        <span className="shrink-0 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Source</span>
-        {(["all", "mt5", "manual"] as const).map((value) => (
-          <button key={value} className={chip(src === value)} onClick={() => setSrc(value)}>
-            {value === "all" ? "All" : value === "mt5" ? "MT5" : "Manual"}
-          </button>
-        ))}
-      </div>
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
-        {symbols.map((s) => (
-          <button key={s} className={chip(sym === s)} onClick={() => setSym(s)}>
-            {s}
-          </button>
-        ))}
-      </div>
-      <div className="flex gap-2">
-        {(["all", "buy", "sell"] as const).map((s) => (
-          <button key={s} className={chip(side === s)} onClick={() => setSide(s)}>
-            {s}
-          </button>
-        ))}
-        <span className="w-px bg-border" />
-        {(["all", "win", "loss"] as const).map((s) => (
-          <button key={s} className={chip(res === s)} onClick={() => setRes(s)}>
-            {s}
-          </button>
-        ))}
-      </div>
-      <div className="flex justify-between text-sm text-muted-foreground">
-        <span>{list.length} trades</span>
-        <Pnl v={total} fmt={(v) => money(v, true)} className="font-bold" />
-      </div>
+      <FilterPane
+        activeCount={activeCount}
+        onReset={resetFilters}
+        summary={
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{list.length} trades</span>
+            <Pnl v={total} fmt={(v) => money(v, true)} className="text-sm font-bold" />
+          </div>
+        }
+      >
+        <FilterSelect
+          label="Period"
+          value={range}
+          options={periodOptions}
+          onChange={(value) => setRange(value as TradeRange)}
+        />
+        <FilterSelect
+          label="Source"
+          value={src}
+          options={sourceOptions}
+          onChange={(value) => setSrc(value as typeof src)}
+        />
+        <FilterSelect
+          label="Symbol"
+          value={sym}
+          options={symbolOptions}
+          onChange={setSym}
+          className="col-span-2"
+        />
+        <FilterSelect
+          label="Side"
+          value={side}
+          options={sideOptions}
+          onChange={(value) => setSide(value as typeof side)}
+        />
+        <FilterSelect
+          label="Result"
+          value={res}
+          options={resultOptions}
+          onChange={(value) => setRes(value as typeof res)}
+        />
+      </FilterPane>
       {!list.length && (
         <div className="panel p-6 text-center text-sm text-muted-foreground">No trades match these filters.</div>
       )}
