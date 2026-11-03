@@ -36,14 +36,14 @@ describe("theme", () => {
     expect(root().classList.contains("dark")).toBe(false);
     expect(root().dataset["theme"]).toBe("light");
     expect(root().style.colorScheme).toBe("light");
-    expect(meta.content).toBe("#f8f9fb");
+    expect(meta.content).toBe("#f6f8fb");
 
     applyTheme("dark");
     expect(root().classList.contains("dark")).toBe(true);
     expect(root().classList.contains("light")).toBe(false);
     expect(root().dataset["theme"]).toBe("dark");
     expect(root().style.colorScheme).toBe("dark");
-    expect(meta.content).toBe("#1a1f26");
+    expect(meta.content).toBe("#0b0f14");
   });
 
   it("persists the selected theme and falls back to system for bad values", () => {

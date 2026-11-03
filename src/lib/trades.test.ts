@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   computeStats,
+  cumulativePnl,
   effectiveStartBalance,
   equityCurve,
   parseReport,
@@ -59,5 +60,14 @@ describe("trades", () => {
 
     const underwater = equityCurve([base], 496, 499);
     expect(underwater[1]).toMatchObject({ date: "Now", equity: 499, drawdown: -1 });
+  });
+
+  it("builds a cumulative P&L series in close-time order", () => {
+    const later = { ...base, id: "later", closeTime: "2026-09-24T11:00:00Z", profit: -3 };
+    const series = cumulativePnl([later, base]);
+    expect(series).toEqual([
+      { i: 1, date: "2026-09-23", pnl: 4 },
+      { i: 2, date: "2026-09-24", pnl: 1 },
+    ]);
   });
 });

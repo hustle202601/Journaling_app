@@ -6,8 +6,8 @@ export type ResolvedTheme = "light" | "dark";
 export const THEME_KEY = "tj.theme.v1";
 export const THEME_EVENT = "tj-theme-change";
 const DARK_QUERY = "(prefers-color-scheme: dark)";
-const DARK_BROWSER_COLOR = "#1a1f26";
-const LIGHT_BROWSER_COLOR = "#f8f9fb";
+const DARK_BROWSER_COLOR = "#0b0f14";
+const LIGHT_BROWSER_COLOR = "#f6f8fb";
 
 function isTheme(value: string | null): value is Theme {
   return value === "light" || value === "dark" || value === "system";

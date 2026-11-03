@@ -271,6 +271,17 @@ export function groupBy(trades: Trade[], fn: (t: Trade) => string) {
   return [...m.entries()].map(([key, ts]) => ({ key, ...computeStats(ts) })).sort((a, b) => b.net - a.net);
 }
 
+/** Running net P&L starting from zero, one point per closed trade. */
+export function cumulativePnl(trades: Trade[]) {
+  let sum = 0;
+  return [...trades]
+    .sort((a, b) => a.closeTime.localeCompare(b.closeTime))
+    .map((trade, index) => {
+      sum += netPnl(trade);
+      return { i: index + 1, date: dayKey(trade.closeTime), pnl: +sum.toFixed(2) };
+    });
+}
+
 export function equityCurve(trades: Trade[], start = 0, currentEquity?: number | null) {
   let eq = start, peak = start;
   const points = [...trades].sort((a, b) => a.closeTime.localeCompare(b.closeTime)).map((t, i) => {

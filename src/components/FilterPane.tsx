@@ -70,36 +70,39 @@ export function FilterPane({
   activeCount,
   onReset,
   summary,
+  search,
   children,
 }: {
   activeCount: number;
   onReset: () => void;
   summary?: ReactNode;
+  search?: ReactNode;
   children: ReactNode;
 }) {
   return (
-    <div className="panel p-2.5">
-      <div className="flex items-center justify-between px-1 pb-2">
+    <div className="panel p-3">
+      <div className="flex items-center justify-between px-1 pb-2.5">
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
           <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
           Filters
           {activeCount > 0 && (
-            <span className="rounded-full bg-primary/15 px-1.5 text-[9px] text-primary">{activeCount}</span>
+            <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[9px] text-primary">{activeCount}</span>
           )}
         </span>
         {activeCount > 0 && (
           <button
             type="button"
             onClick={onReset}
-            className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground"
+            className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
           >
             <RotateCcw className="h-3 w-3" aria-hidden="true" />
             Reset
           </button>
         )}
       </div>
-      <div className="grid grid-cols-2 gap-2">{children}</div>
-      {summary && <div className="mt-2 border-t px-1 pt-2">{summary}</div>}
+      {search && <div className="mb-2">{search}</div>}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">{children}</div>
+      {summary && <div className="mt-2.5 border-t pt-2.5">{summary}</div>}
     </div>
   );
 }
