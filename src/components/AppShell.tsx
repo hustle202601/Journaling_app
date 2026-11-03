@@ -1,6 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  Activity,
   BarChart3,
   Cable,
   CalendarDays,
@@ -165,14 +164,14 @@ function Sidebar({
           collapsed ? "justify-center px-2" : "px-4",
         )}
       >
-        <Link to="/" className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
-          <Activity className="h-5 w-5" />
+        <Link to="/" className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white/5">
+          <img src="/logo.png" alt="Tradezy" className="h-5 w-auto object-contain" />
         </Link>
         {!collapsed && (
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-bold tracking-tight text-sidebar-foreground">TradeJournal</div>
+            <div className="truncate text-sm font-bold tracking-tight text-sidebar-foreground">Tradezy</div>
             <div className="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              MT5 Performance
+              Trading Journal
             </div>
           </div>
         )}
@@ -389,13 +388,13 @@ export function AppShell({
       <Sheet open={navOpen} onOpenChange={setNavOpen}>
         <SheetContent side="left" className="w-[280px] border-sidebar-border bg-sidebar p-0">
           <SheetHeader className="flex h-16 flex-row items-center gap-2.5 space-y-0 border-b border-sidebar-border px-4 py-0 pr-12 text-left">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground">
-              <Activity className="h-5 w-5" />
+            <span className="grid h-9 w-9 place-items-center rounded-lg bg-white/5">
+              <img src="/logo.png" alt="Tradezy" className="h-5 w-auto object-contain" />
             </span>
             <div className="min-w-0">
-              <SheetTitle className="truncate text-sm font-bold tracking-tight">TradeJournal</SheetTitle>
+              <SheetTitle className="truncate text-sm font-bold tracking-tight">Tradezy</SheetTitle>
               <SheetDescription className="truncate text-[10px] font-semibold uppercase tracking-[0.14em]">
-                MT5 Performance
+                Trading Journal
               </SheetDescription>
             </div>
           </SheetHeader>
