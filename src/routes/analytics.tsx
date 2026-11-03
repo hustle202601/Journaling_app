@@ -3,7 +3,19 @@ import { useMemo, useState } from "react";
 import { Area, AreaChart, Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AppShell, EmptyState, Pnl, Stat } from "@/components/AppShell";
 import { useTrades } from "@/lib/store";
-import { computeStats, equityCurve, groupBy, groupPnl, money, pct, session } from "@/lib/trades";
+import {
+  computeStats,
+  effectiveStartBalance,
+  equityCurve,
+  groupBy,
+  groupPnl,
+  money,
+  pct,
+  session,
+  tradeRanges,
+  tradesInRange,
+  type TradeRange,
+} from "@/lib/trades";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/analytics")({
@@ -22,22 +34,66 @@ export const Route = createFileRoute("/analytics")({
 
 const tip = { contentStyle: { background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 } };
 const periods = ["day", "week", "month", "year"] as const;
+const chip = (on: boolean) =>
+  cn(
+    "rounded-full border px-3 py-1.5 text-xs font-semibold whitespace-nowrap",
+    on ? "border-primary bg-primary text-primary-foreground" : "bg-card text-muted-foreground",
+  );
 
 function Analytics() {
-  const { trades, startBalance } = useTrades();
+  const { trades, startBalance, startBalanceManual, loading, mt5Balance, mt5Equity } = useTrades();
   const [period, setPeriod] = useState<(typeof periods)[number]>("day");
-  const s = useMemo(() => computeStats(trades, startBalance), [trades, startBalance]);
-  const curve = useMemo(() => equityCurve(trades, startBalance), [trades, startBalance]);
-  const bars = useMemo(() => groupPnl(trades, period).slice(-30), [trades, period]);
-  const bySym = useMemo(() => groupBy(trades, (t) => t.symbol), [trades]);
-  const bySess = useMemo(() => groupBy(trades, (t) => session(t.openTime)), [trades]);
-  const bySide = useMemo(() => groupBy(trades, (t) => t.side.toUpperCase()), [trades]);
+  const [range, setRange] = useState<TradeRange>("all");
 
-  if (!trades.length) return <AppShell title="Analytics"><EmptyState /></AppShell>;
+  const scoped = useMemo(() => tradesInRange(trades, range), [trades, range]);
+  const statsStart = useMemo(
+    () => effectiveStartBalance(scoped, startBalance, mt5Balance, startBalanceManual),
+    [scoped, startBalance, mt5Balance, startBalanceManual],
+  );
+  const currentEquity = mt5Balance != null ? (mt5Equity ?? mt5Balance) : null;
+  const s = useMemo(() => computeStats(scoped, statsStart), [scoped, statsStart]);
+  const curve = useMemo(
+    () => equityCurve(scoped, statsStart, currentEquity),
+    [scoped, statsStart, currentEquity],
+  );
+  const bars = useMemo(() => groupPnl(scoped, period).slice(-30), [scoped, period]);
+  const bySym = useMemo(() => groupBy(scoped, (t) => t.symbol), [scoped]);
+  const bySess = useMemo(() => groupBy(scoped, (t) => session(t.openTime)), [scoped]);
+  const bySide = useMemo(() => groupBy(scoped, (t) => t.side.toUpperCase()), [scoped]);
+
+  if (loading && !trades.length) {
+    return (
+      <AppShell title="Analytics">
+        <div className="panel p-6 text-center text-sm text-muted-foreground">Loading your journal…</div>
+      </AppShell>
+    );
+  }
+  if (!trades.length && mt5Balance == null) return <AppShell title="Analytics"><EmptyState /></AppShell>;
+
   return (
     <AppShell title="Analytics">
+      <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1">
+        <span className="shrink-0 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Period</span>
+        {tradeRanges.map(({ value, label }) => (
+          <button key={value} className={chip(range === value)} onClick={() => setRange(value)}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {!scoped.length && (
+        <div className="panel p-4 text-sm text-muted-foreground">
+          No closed trades in this period. Your MT5 balance and equity are still shown below.
+        </div>
+      )}
+
       <section className="panel p-4">
-        <h2 className="font-bold">Equity curve</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="font-bold">Equity curve</h2>
+          {currentEquity != null && (
+            <span className="num text-xs text-muted-foreground">Now {money(currentEquity)}</span>
+          )}
+        </div>
         <div className="mt-2 h-44"><ResponsiveContainer><AreaChart data={curve}>
           <defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="var(--primary)" stopOpacity={0.35} /><stop offset="1" stopColor="var(--primary)" stopOpacity={0} /></linearGradient></defs>
           <XAxis dataKey="date" hide /><YAxis domain={["dataMin", "dataMax"]} width={52} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
@@ -64,6 +120,8 @@ function Analytics() {
       </section>
 
       <div className="grid grid-cols-2 gap-2">
+        <Stat label="MT5 balance"><span className="num">{mt5Balance != null ? money(mt5Balance) : "—"}</span></Stat>
+        <Stat label="Live equity"><span className="num">{currentEquity != null ? money(currentEquity) : "—"}</span></Stat>
         <Stat label="Net profit"><Pnl v={s.net} fmt={(v) => money(v, true)} /></Stat>
         <Stat label="Profit factor"><span className="num">{isFinite(s.profitFactor) ? s.profitFactor.toFixed(2) : "∞"}</span></Stat>
         <Stat label="Win / loss"><span className="num">{pct(s.winRate)} / {pct(s.lossRate)}</span></Stat>
@@ -76,9 +134,9 @@ function Analytics() {
         <Stat label="Streaks W/L"><span className="num">{s.maxWinStreak} / {s.maxLossStreak}</span></Stat>
       </div>
 
-      <Breakdown title="By symbol" rows={bySym} />
-      <Breakdown title="By session" rows={bySess} />
-      <Breakdown title="Buy vs sell" rows={bySide} />
+      {bySym.length > 0 && <Breakdown title="By symbol" rows={bySym} />}
+      {bySess.length > 0 && <Breakdown title="By session" rows={bySess} />}
+      {bySide.length > 0 && <Breakdown title="Buy vs sell" rows={bySide} />}
     </AppShell>
   );
 }

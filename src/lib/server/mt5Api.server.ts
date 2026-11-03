@@ -479,18 +479,8 @@ async function syncTrades(request: Request, env: unknown): Promise<Response> {
 
     await commitChanges(env, updates, deletes);
 
-    // Propagate the synced MT5 balance to the user profile so Analytics and
-    // other pages use the real account balance as the starting balance.
-    const syncedBalance = asNumber(payload.account.balance);
-    if (syncedBalance > 0) {
-      await patchDocument(
-        env,
-        documentPath("users", tokenUserId),
-        { startBalance: syncedBalance, updatedAt: now },
-        ["startBalance", "updatedAt"],
-      ).catch(() => undefined);
-    }
-
+    // The client anchors its balance and equity curve to the live values on
+    // mt5Accounts. Do not overwrite the user's manual starting balance here.
     const runId = randomId();
     await patchDocument(
       env,

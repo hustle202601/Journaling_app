@@ -1,6 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { LayoutDashboard, List, BarChart3, Upload, CalendarDays } from "lucide-react";
 import type { ReactNode } from "react";
+import { AuthMenu } from "@/components/AuthMenu";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 const tabs = [
@@ -16,7 +18,11 @@ export function AppShell({ title, children, wide = false }: { title: string; chi
     <div className={cn("mx-auto min-h-screen pb-24", wide ? "max-w-6xl" : "max-w-md")}>
       <header className="sticky top-0 z-10 flex items-center justify-between bg-background/85 px-5 pb-3 pt-5 backdrop-blur">
         <h1 className="text-xl font-extrabold tracking-tight">{title}</h1>
-        <span className="num rounded-full bg-secondary px-2.5 py-1 text-[10px] uppercase text-muted-foreground">MT5 Journal</span>
+        <div className="flex items-center gap-1">
+          <span className="num rounded-full bg-secondary px-2.5 py-1 text-[10px] uppercase text-muted-foreground">MT5 Journal</span>
+          <ThemeToggle />
+          <AuthMenu />
+        </div>
       </header>
       <main className="space-y-4 px-4">{children}</main>
       <nav className="fixed inset-x-0 bottom-0 z-20 border-t bg-card/95 backdrop-blur">

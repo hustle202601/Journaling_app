@@ -14,9 +14,19 @@ export interface Trade {
   commission: number;
   swap: number;
   profit: number; // gross profit from MT5
+  /** Where the trade came from: automatic MT5 sync or a manual/report import. */
+  source?: "mt5" | "manual";
+  accountId?: string;
+  positionId?: string;
+  dealId?: string;
+  closeReason?: string;
+  comment?: string;
+  magic?: number;
 }
 
 export const netPnl = (t: Trade) => t.profit + t.commission + t.swap;
+
+export const totalNet = (trades: Trade[]) => trades.reduce((sum, t) => sum + netPnl(t), 0);
 
 /** R-multiple based on SL distance; null when no SL. */
 export function rMultiple(t: Trade): number | null {
@@ -209,6 +219,41 @@ export const periodKey = {
   day: dayKey, week: weekKey, month: (iso: string) => iso.slice(0, 7), year: (iso: string) => iso.slice(0, 4),
 };
 
+export type TradeRange = "all" | "today" | "week" | "month" | "year";
+
+export const tradeRanges: { value: TradeRange; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "today", label: "Today" },
+  { value: "week", label: "Week" },
+  { value: "month", label: "Month" },
+  { value: "year", label: "Year" },
+];
+
+/** Filter closed trades to the current day/week/month/year (UTC, same keys as the dashboard). */
+export function tradesInRange(trades: Trade[], range: TradeRange, now = new Date().toISOString()): Trade[] {
+  if (range === "all") return trades;
+  const key = range === "today" ? "day" : range;
+  return trades.filter((trade) => periodKey[key](trade.closeTime) === periodKey[key](now));
+}
+
+/**
+ * Anchor the equity curve to the real MT5 balance when it is available.
+ * Subtracting the selected trades' net P&L from the current balance gives the
+ * balance at the start of the selected period, so the curve ends at the real
+ * account balance instead of adding history on top of the current balance.
+ */
+export function effectiveStartBalance(
+  trades: Trade[],
+  fallbackStart: number,
+  mt5Balance?: number | null,
+  manualOverride = false,
+): number {
+  if (!manualOverride && mt5Balance != null && Number.isFinite(mt5Balance)) {
+    return mt5Balance - totalNet(trades);
+  }
+  return fallbackStart;
+}
+
 export function groupPnl(trades: Trade[], by: keyof typeof periodKey) {
   const m = new Map<string, { key: string; pnl: number; trades: number; wins: number }>();
   for (const t of trades) {
@@ -226,12 +271,32 @@ export function groupBy(trades: Trade[], fn: (t: Trade) => string) {
   return [...m.entries()].map(([key, ts]) => ({ key, ...computeStats(ts) })).sort((a, b) => b.net - a.net);
 }
 
-export function equityCurve(trades: Trade[], start = 0) {
+export function equityCurve(trades: Trade[], start = 0, currentEquity?: number | null) {
   let eq = start, peak = start;
-  return [...trades].sort((a, b) => a.closeTime.localeCompare(b.closeTime)).map((t, i) => {
+  const points = [...trades].sort((a, b) => a.closeTime.localeCompare(b.closeTime)).map((t, i) => {
     eq += netPnl(t); peak = Math.max(peak, eq);
     return { i: i + 1, date: dayKey(t.closeTime), equity: +eq.toFixed(2), drawdown: +(eq - peak).toFixed(2) };
   });
+
+  if (currentEquity != null && Number.isFinite(currentEquity)) {
+    const equity = +currentEquity.toFixed(2);
+    if (!points.length) {
+      peak = Math.max(start, equity);
+      return [
+        { i: 0, date: "Start", equity: +start.toFixed(2), drawdown: 0 },
+        { i: 1, date: "Now", equity, drawdown: +(equity - peak).toFixed(2) },
+      ];
+    }
+    peak = Math.max(peak, equity);
+    points.push({
+      i: points.length + 1,
+      date: "Now",
+      equity,
+      drawdown: +(equity - peak).toFixed(2),
+    });
+  }
+
+  return points;
 }
 
 /* ---------------- Formatting ---------------- */
